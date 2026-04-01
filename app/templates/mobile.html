@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>모바일 녹화 제어</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>아이폰용 녹화 제어</h1>
+
+    <div class="card">
+      <h2>1. 사용자 생성</h2>
+      <input id="userName" type="text" placeholder="예: 에네나" />
+      <button onclick="createUser()">사용자 생성</button>
+      <div id="userStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. 세션 생성</h2>
+      <input id="sessionTitle" type="text" placeholder="예: 3회차 런스루" />
+      <button onclick="createSession()">세션 생성</button>
+      <div id="sessionCreateStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. 세션 선택</h2>
+      <button class="button-secondary" onclick="loadSessions()">세션 목록 새로고침</button>
+      <select id="sessionSelect"></select>
+      <div id="sessionStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>4. 녹화 제어</h2>
+      <button onclick="startRecording()">녹화 시작</button>
+      <button class="button-secondary" onclick="endRecording()">녹화 종료</button>
+      <div id="recordingStatus" class="status"></div>
+    </div>
+  </div>
+
+  <script>
+    async function createUser() {
+      const name = document.getElementById("userName").value.trim();
+      if (!name) {
+        alert("사용자 이름을 입력하세요.");
+        return;
+      }
+
+      const res = await fetch("/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name })
+      });
+
+      const data = await res.json();
+      document.getElementById("userStatus").innerText =
+        "생성 완료:\n" + JSON.stringify(data, null, 2);
+    }
+
+    async function createSession() {
+      const title = document.getElementById("sessionTitle").value.trim();
+      if (!title) {
+        alert("세션 제목을 입력하세요.");
+        return;
+      }
+
+      const res = await fetch("/sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ title })
+      });
+
+      const data = await res.json();
+      document.getElementById("sessionCreateStatus").innerText =
+        "세션 생성 완료:\n" + JSON.stringify(data, null, 2);
+
+      await loadSessions();
+    }
+
+    async function loadSessions() {
+      const res = await fetch("/sessions");
+      const sessions = await res.json();
+
+      const select = document.getElementById("sessionSelect");
+      select.innerHTML = "";
+
+      sessions.forEach((session) => {
+        const option = document.createElement("option");
+        option.value = session.id;
+        option.textContent = `${session.id} - ${session.title}`;
+        select.appendChild(option);
+      });
+
+      document.getElementById("sessionStatus").innerText =
+        sessions.length > 0
+          ? `${sessions.length}개 세션 로드 완료`
+          : "세션이 없습니다.";
+    }
+
+    async function startRecording() {
+      const sessionId = document.getElementById("sessionSelect").value;
+      if (!sessionId) {
+        alert("세션을 먼저 선택하세요.");
+        return;
+      }
+
+      const res = await fetch(`/sessions/${sessionId}/start-recording`, {
+        method: "POST"
+      });
+
+      const data = await res.json();
+      document.getElementById("recordingStatus").innerText =
+        "녹화 시작 응답:\n" + JSON.stringify(data, null, 2);
+    }
+
+    async function endRecording() {
+      const sessionId = document.getElementById("sessionSelect").value;
+      if (!sessionId) {
+        alert("세션을 먼저 선택하세요.");
+        return;
+      }
+
+      const res = await fetch(`/sessions/${sessionId}/end-recording`, {
+        method: "POST"
+      });
+
+      const data = await res.json();
+      document.getElementById("recordingStatus").innerText =
+        "녹화 종료 응답:\n" + JSON.stringify(data, null, 2);
+    }
+
+    loadSessions();
+  </script>
+</body>
+</html>
