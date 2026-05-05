@@ -8,7 +8,7 @@ from app.services.face_analysis.video_reader import VideoFrameReader
 
 
 def main() -> None:
-    video_path = PROJECT_ROOT / "uploads" / "session_6.webm"
+    video_path = PROJECT_ROOT / "uploads" / "session_7.webm"
     reader = VideoFrameReader(frame_interval_seconds=1.0)
 
     for video_frame in reader.read_frames(video_path):
