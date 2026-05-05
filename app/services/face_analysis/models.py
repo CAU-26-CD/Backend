@@ -16,3 +16,9 @@ class FaceDetection:
     bbox: tuple[float, float, float, float]
     embedding: list[float]
     confidence: float
+
+
+@dataclass(frozen=True)
+class ClusteredFaceDetection:
+    person_id: str
+    detection: FaceDetection
