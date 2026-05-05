@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 from app.services.face_analysis.clustering import FaceClusterer
@@ -38,19 +38,46 @@ class FaceVideoAnalyzer:
         for detection in self.detect_faces(video_path):
             yield self.clusterer.assign(detection)
 
-    def build_timeline(self, video_path: str | Path) -> list[FaceAppearance]:
-        timeline_builder = AppearanceTimelineBuilder()
-        clusterer = FaceClusterer()  # 🔥 이것도 같이 초기화하는 게 중요
+    def build_timeline(
+        self,
+        video_path: str | Path,
+        progress_callback: Callable[[int, float, int], None] | None = None,
+    ) -> list[FaceAppearance]:
+        timeline_builder = AppearanceTimelineBuilder(
+            max_gap_seconds=self.timeline_builder.max_gap_seconds
+        )
+        clusterer = FaceClusterer(
+            similarity_threshold=self.clusterer.similarity_threshold
+        )
 
-        for detection in self.detect_faces(video_path):
-            clustered = clusterer.assign(detection)
-            timeline_builder.add(clustered)
+        for sampled_frame_count, video_frame in enumerate(
+            self.read_sampled_frames(video_path),
+            start=1,
+        ):
+            detections = self.detector.detect(video_frame)
+            for detection in detections:
+                clustered = clusterer.assign(detection)
+                timeline_builder.add(clustered)
+
+            if progress_callback is not None:
+                progress_callback(
+                    sampled_frame_count,
+                    video_frame.timestamp_seconds,
+                    len(detections),
+                )
 
         return timeline_builder.build()
 
-    def analyze(self, video_path: str | Path) -> FaceAnalysisResult:
+    def analyze(
+        self,
+        video_path: str | Path,
+        progress_callback: Callable[[int, float, int], None] | None = None,
+    ) -> FaceAnalysisResult:
         path = Path(video_path)
-        appearances = self.build_timeline(path)
+        appearances = self.build_timeline(
+            path,
+            progress_callback=progress_callback,
+        )
         return FaceAnalysisResult(
             video_path=str(path),
             appearances=appearances,
