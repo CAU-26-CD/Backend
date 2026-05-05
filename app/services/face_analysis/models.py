@@ -22,3 +22,17 @@ class FaceDetection:
 class ClusteredFaceDetection:
     person_id: str
     detection: FaceDetection
+
+
+@dataclass(frozen=True)
+class FaceAppearance:
+    person_id: str
+    start_seconds: float
+    end_seconds: float
+    detection_count: int
+
+
+@dataclass(frozen=True)
+class FaceAnalysisResult:
+    video_path: str
+    appearances: list[FaceAppearance]
