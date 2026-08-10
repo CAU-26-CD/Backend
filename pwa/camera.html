@@ -655,9 +655,6 @@
       st.etags.push({ part_number: n, etag });
       st.uploadedBytes += blob.size;
       await idbAddUploadEtag(DB_SESSION_ID, n, etag).catch(() => {});
-      if (recording) {
-        setMsg(`백그라운드 업로드 ${(st.uploadedBytes / (1024 * 1024)).toFixed(0)}MB`);
-      }
     } catch (e) {
       console.warn(`스트리밍 파트 ${n} 업로드 실패`, e);
       st.failed = true; // 종료 후 기존 재개 경로로 폴백
